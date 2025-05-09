@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { IpReportPDF } from "./ip-report-pdf";
 
 interface IpData {
   ip: string;
@@ -68,7 +69,7 @@ export function IpAnalysis() {
     setError(null);
     setIpData(null);
     setSecurityData(null);
-
+         
     try {
       // Use ipinfo.io free API for IP data - allows 1,000 requests per month without API key
       const targetIp = ip.trim() || ""; // Empty string gets your own IP
@@ -294,491 +295,510 @@ export function IpAnalysis() {
       )}
 
       {ipData && (
-        <Tabs defaultValue="security" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="security">Security Assessment</TabsTrigger>
-            <TabsTrigger value="location">Location & Network</TabsTrigger>
-            <TabsTrigger value="additional">Additional Information</TabsTrigger>
-          </TabsList>
+        <>
+          <Tabs defaultValue="security" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="security">Security Assessment</TabsTrigger>
+              <TabsTrigger value="location">Location & Network</TabsTrigger>
+              <TabsTrigger value="additional">
+                Additional Information
+              </TabsTrigger>
+            </TabsList>
+            <IpReportPDF ipData={ipData} securityData={securityData!} />
 
-          <TabsContent value="security">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Shield className="mr-2 h-5 w-5" />
-                  Security Assessment for {ipData.ip}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {securityData && (
-                  <div className="space-y-6">
-                    <div className="mb-6">
-                      <div className="flex justify-between mb-2">
-                        <div className="font-medium">
-                          Risk Score: {securityData.risk_score}/100
+            <TabsContent value="security">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Shield className="mr-2 h-5 w-5" />
+                    Security Assessment for {ipData.ip}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {securityData && (
+                    <div className="space-y-6">
+                      <div className="mb-6">
+                        <div className="flex justify-between mb-2">
+                          <div className="font-medium">
+                            Risk Score: {securityData.risk_score}/100
+                          </div>
+                          <Badge
+                            variant={
+                              securityData.risk_score < 40
+                                ? "outline"
+                                : "destructive"
+                            }
+                          >
+                            {getRiskLabel(securityData.risk_score)}
+                          </Badge>
                         </div>
-                        <Badge
-                          variant={
-                            securityData.risk_score < 40
-                              ? "outline"
-                              : "destructive"
-                          }
-                        >
-                          {getRiskLabel(securityData.risk_score)}
-                        </Badge>
+                        <Progress
+                          value={securityData.risk_score}
+                          className={`h-2 ${getRiskColor(
+                            securityData.risk_score
+                          )}`}
+                        />
                       </div>
-                      <Progress
-                        value={securityData.risk_score}
-                        className={`h-2 ${getRiskColor(
-                          securityData.risk_score
-                        )}`}
-                      />
-                    </div>
 
-                    <Alert
-                      className={`${
-                        securityData.risk_score < 40
-                          ? "border-green-500"
-                          : securityData.risk_score < 60
-                          ? "border-yellow-500"
-                          : "border-red-500"
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        {securityData.risk_score < 40 ? (
-                          <ShieldCheck className="h-5 w-5 text-green-500" />
-                        ) : (
-                          <ShieldAlert
-                            className={`h-5 w-5 ${
-                              securityData.risk_score < 60
-                                ? "text-yellow-500"
-                                : "text-red-500"
-                            }`}
-                          />
-                        )}
-                        <AlertTitle>Security Recommendation</AlertTitle>
-                      </div>
-                      <AlertDescription className="mt-2">
-                        {securityData.recommendation}
-                      </AlertDescription>
-                    </Alert>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-4">
-                        <div>
-                          <div className="font-medium mb-2">
-                            Anonymization Checks
-                          </div>
-                          <div className="grid grid-cols-2 gap-2">
-                            <div className="flex items-center gap-2 text-sm">
-                              <Badge
-                                variant={
-                                  securityData.is_vpn
-                                    ? "destructive"
-                                    : "outline"
-                                }
-                              >
-                                VPN
-                              </Badge>
-                              {securityData.is_vpn
-                                ? "Detected"
-                                : "Not Detected"}
-                            </div>
-                            <div className="flex items-center gap-2 text-sm">
-                              <Badge
-                                variant={
-                                  securityData.is_proxy
-                                    ? "destructive"
-                                    : "outline"
-                                }
-                              >
-                                Proxy
-                              </Badge>
-                              {securityData.is_proxy
-                                ? "Detected"
-                                : "Not Detected"}
-                            </div>
-                            <div className="flex items-center gap-2 text-sm">
-                              <Badge
-                                variant={
-                                  securityData.is_tor
-                                    ? "destructive"
-                                    : "outline"
-                                }
-                              >
-                                Tor
-                              </Badge>
-                              {securityData.is_tor
-                                ? "Detected"
-                                : "Not Detected"}
-                            </div>
-                            <div className="flex items-center gap-2 text-sm">
-                              <Badge
-                                variant={
-                                  securityData.is_datacenter
-                                    ? "destructive"
-                                    : "outline"
-                                }
-                              >
-                                Datacenter
-                              </Badge>
-                              {securityData.is_datacenter
-                                ? "Detected"
-                                : "Not Detected"}
-                            </div>
-                          </div>
+                      <Alert
+                        className={`${
+                          securityData.risk_score < 40
+                            ? "border-green-500"
+                            : securityData.risk_score < 60
+                            ? "border-yellow-500"
+                            : "border-red-500"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          {securityData.risk_score < 40 ? (
+                            <ShieldCheck className="h-5 w-5 text-green-500" />
+                          ) : (
+                            <ShieldAlert
+                              className={`h-5 w-5 ${
+                                securityData.risk_score < 60
+                                  ? "text-yellow-500"
+                                  : "text-red-500"
+                              }`}
+                            />
+                          )}
+                          <AlertTitle>Security Recommendation</AlertTitle>
                         </div>
+                        <AlertDescription className="mt-2">
+                          {securityData.recommendation}
+                        </AlertDescription>
+                      </Alert>
 
-                        <div>
-                          <div className="font-medium mb-2">
-                            Reputation Checks
-                          </div>
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2 text-sm">
-                              <Badge
-                                variant={
-                                  securityData.blacklisted
-                                    ? "destructive"
-                                    : "outline"
-                                }
-                              >
-                                Blacklisted
-                              </Badge>
-                              {securityData.blacklisted
-                                ? `Yes (${securityData.blacklist_count} sources)`
-                                : "No"}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-4">
+                          <div>
+                            <div className="font-medium mb-2">
+                              Anonymization Checks
                             </div>
-                            {securityData.blacklisted && (
-                              <div className="text-sm ml-6">
-                                Sources:{" "}
-                                {securityData.blacklist_sources.join(", ")}
+                            <div className="grid grid-cols-2 gap-2">
+                              <div className="flex items-center gap-2 text-sm">
+                                <Badge
+                                  variant={
+                                    securityData.is_vpn
+                                      ? "destructive"
+                                      : "outline"
+                                  }
+                                >
+                                  VPN
+                                </Badge>
+                                {securityData.is_vpn
+                                  ? "Detected"
+                                  : "Not Detected"}
                               </div>
-                            )}
-                            <div className="flex items-center gap-2 text-sm">
-                              <Badge
-                                variant={
-                                  securityData.abuse_reports > 0
-                                    ? "destructive"
-                                    : "outline"
-                                }
-                              >
-                                Abuse Reports
-                              </Badge>
-                              {securityData.abuse_reports}
+                              <div className="flex items-center gap-2 text-sm">
+                                <Badge
+                                  variant={
+                                    securityData.is_proxy
+                                      ? "destructive"
+                                      : "outline"
+                                  }
+                                >
+                                  Proxy
+                                </Badge>
+                                {securityData.is_proxy
+                                  ? "Detected"
+                                  : "Not Detected"}
+                              </div>
+                              <div className="flex items-center gap-2 text-sm">
+                                <Badge
+                                  variant={
+                                    securityData.is_tor
+                                      ? "destructive"
+                                      : "outline"
+                                  }
+                                >
+                                  Tor
+                                </Badge>
+                                {securityData.is_tor
+                                  ? "Detected"
+                                  : "Not Detected"}
+                              </div>
+                              <div className="flex items-center gap-2 text-sm">
+                                <Badge
+                                  variant={
+                                    securityData.is_datacenter
+                                      ? "destructive"
+                                      : "outline"
+                                  }
+                                >
+                                  Datacenter
+                                </Badge>
+                                {securityData.is_datacenter
+                                  ? "Detected"
+                                  : "Not Detected"}
+                              </div>
                             </div>
-                            <div className="flex items-center gap-2 text-sm">
-                              <Badge
-                                variant={
-                                  securityData.recent_attacks > 0
-                                    ? "destructive"
-                                    : "outline"
-                                }
-                              >
-                                Recent Attacks
-                              </Badge>
-                              {securityData.recent_attacks}
+                          </div>
+
+                          <div>
+                            <div className="font-medium mb-2">
+                              Reputation Checks
+                            </div>
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2 text-sm">
+                                <Badge
+                                  variant={
+                                    securityData.blacklisted
+                                      ? "destructive"
+                                      : "outline"
+                                  }
+                                >
+                                  Blacklisted
+                                </Badge>
+                                {securityData.blacklisted
+                                  ? `Yes (${securityData.blacklist_count} sources)`
+                                  : "No"}
+                              </div>
+                              {securityData.blacklisted && (
+                                <div className="text-sm ml-6">
+                                  Sources:{" "}
+                                  {securityData.blacklist_sources.join(", ")}
+                                </div>
+                              )}
+                              <div className="flex items-center gap-2 text-sm">
+                                <Badge
+                                  variant={
+                                    securityData.abuse_reports > 0
+                                      ? "destructive"
+                                      : "outline"
+                                  }
+                                >
+                                  Abuse Reports
+                                </Badge>
+                                {securityData.abuse_reports}
+                              </div>
+                              <div className="flex items-center gap-2 text-sm">
+                                <Badge
+                                  variant={
+                                    securityData.recent_attacks > 0
+                                      ? "destructive"
+                                      : "outline"
+                                  }
+                                >
+                                  Recent Attacks
+                                </Badge>
+                                {securityData.recent_attacks}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="space-y-4">
+                          <div>
+                            <div className="font-medium mb-2">
+                              IP Information
+                            </div>
+                            <div className="space-y-2">
+                              <div className="text-sm flex gap-2">
+                                <span className="font-medium">Type:</span>
+                                {ipData.bogon
+                                  ? "Bogon (Reserved/Private)"
+                                  : "Public"}
+                              </div>
+                              <div className="text-sm flex gap-2">
+                                <span className="font-medium">ISP/Org:</span>
+                                {ipData.org || "N/A"}
+                              </div>
+                              <div className="text-sm flex gap-2">
+                                <span className="font-medium">Hostname:</span>
+                                {ipData.hostname || "N/A"}
+                              </div>
+                              <div className="text-sm flex gap-2">
+                                <span className="font-medium">Country:</span>
+                                {getCountryName(ipData.country)}
+                              </div>
+                              <div className="text-sm flex gap-2">
+                                <span className="font-medium">Region:</span>
+                                {ipData.region || "N/A"}
+                              </div>
+                              <div className="text-sm flex gap-2">
+                                <span className="font-medium">City:</span>
+                                {ipData.city || "N/A"}
+                              </div>
                             </div>
                           </div>
                         </div>
                       </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-                      <div className="space-y-4">
-                        <div>
-                          <div className="font-medium mb-2">IP Information</div>
-                          <div className="space-y-2">
-                            <div className="text-sm flex gap-2">
-                              <span className="font-medium">Type:</span>
-                              {ipData.bogon
-                                ? "Bogon (Reserved/Private)"
-                                : "Public"}
-                            </div>
-                            <div className="text-sm flex gap-2">
-                              <span className="font-medium">ISP/Org:</span>
-                              {ipData.org || "N/A"}
-                            </div>
-                            <div className="text-sm flex gap-2">
-                              <span className="font-medium">Hostname:</span>
-                              {ipData.hostname || "N/A"}
-                            </div>
-                            <div className="text-sm flex gap-2">
-                              <span className="font-medium">Country:</span>
-                              {getCountryName(ipData.country)}
-                            </div>
-                            <div className="text-sm flex gap-2">
-                              <span className="font-medium">Region:</span>
-                              {ipData.region || "N/A"}
-                            </div>
-                            <div className="text-sm flex gap-2">
-                              <span className="font-medium">City:</span>
-                              {ipData.city || "N/A"}
-                            </div>
+            <TabsContent value="location">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Globe className="mr-2 h-5 w-5" />
+                    Location & Network for {ipData.ip}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-4">
+                      <div>
+                        <div className="font-medium flex items-center mb-2">
+                          <Globe className="mr-2 h-4 w-4" /> Location Details
+                        </div>
+                        <div className="space-y-2">
+                          <div className="text-sm">
+                            <span className="font-medium">City:</span>{" "}
+                            {ipData.city || "N/A"}
+                          </div>
+                          <div className="text-sm">
+                            <span className="font-medium">Region:</span>{" "}
+                            {ipData.region || "N/A"}
+                          </div>
+                          <div className="text-sm">
+                            <span className="font-medium">Country:</span>{" "}
+                            {getCountryName(ipData.country)}
+                          </div>
+                          <div className="text-sm">
+                            <span className="font-medium">Postal Code:</span>{" "}
+                            {ipData.postal || "N/A"}
+                          </div>
+                          <div className="text-sm">
+                            <span className="font-medium">Coordinates:</span>{" "}
+                            {getCoordinates(ipData.loc).lat},{" "}
+                            {getCoordinates(ipData.loc).long}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="font-medium flex items-center mb-2">
+                          <Clock className="mr-2 h-4 w-4" /> Time & Additional
+                          Info
+                        </div>
+                        <div className="space-y-2">
+                          <div className="text-sm">
+                            <span className="font-medium">Timezone:</span>{" "}
+                            {ipData.timezone || "N/A"}
+                          </div>
+                          <div className="text-sm">
+                            <span className="font-medium">
+                              Location Accuracy:
+                            </span>{" "}
+                            {"City Level"}
+                          </div>
+                          <div className="text-sm">
+                            <span className="font-medium">IP Version:</span>{" "}
+                            {ipData.ip && ipData.ip.includes(":")
+                              ? "IPv6"
+                              : "IPv4"}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div>
+                        <div className="font-medium flex items-center mb-2">
+                          <Wifi className="mr-2 h-4 w-4" /> Network Details
+                        </div>
+                        <div className="space-y-2">
+                          <div className="text-sm">
+                            <span className="font-medium">Hostname:</span>{" "}
+                            {ipData.hostname || "N/A"}
+                          </div>
+                          <div className="text-sm">
+                            <span className="font-medium">
+                              ISP/Organization:
+                            </span>{" "}
+                            {ipData.org || "N/A"}
+                          </div>
+                          <div className="text-sm">
+                            <span className="font-medium">Bogon IP:</span>{" "}
+                            {securityData?.is_bogon
+                              ? "Yes (Reserved/Private range)"
+                              : "No"}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="font-medium flex items-center mb-2">
+                          <Server className="mr-2 h-4 w-4" /> Connection Details
+                        </div>
+                        <div className="space-y-2">
+                          <div className="text-sm">
+                            <span className="font-medium">Type:</span>{" "}
+                            {securityData?.is_datacenter
+                              ? "Datacenter/Hosting"
+                              : "Residential/Business"}
+                          </div>
+                          <div className="text-sm">
+                            <span className="font-medium">Proxy:</span>{" "}
+                            {securityData?.is_proxy ? "Yes" : "No"}
+                          </div>
+                          <div className="text-sm">
+                            <span className="font-medium">VPN:</span>{" "}
+                            {securityData?.is_vpn ? "Yes" : "No"}
+                          </div>
+                          <div className="text-sm">
+                            <span className="font-medium">Tor:</span>{" "}
+                            {securityData?.is_tor ? "Yes" : "No"}
                           </div>
                         </div>
                       </div>
                     </div>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-          <TabsContent value="location">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Globe className="mr-2 h-5 w-5" />
-                  Location & Network for {ipData.ip}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-4">
+            <TabsContent value="additional">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Info className="mr-2 h-5 w-5" />
+                    Additional Information for {ipData.ip}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
                     <div>
-                      <div className="font-medium flex items-center mb-2">
-                        <Globe className="mr-2 h-4 w-4" /> Location Details
-                      </div>
-                      <div className="space-y-2">
-                        <div className="text-sm">
-                          <span className="font-medium">City:</span>{" "}
-                          {ipData.city || "N/A"}
-                        </div>
-                        <div className="text-sm">
-                          <span className="font-medium">Region:</span>{" "}
-                          {ipData.region || "N/A"}
-                        </div>
-                        <div className="text-sm">
-                          <span className="font-medium">Country:</span>{" "}
-                          {getCountryName(ipData.country)}
-                        </div>
-                        <div className="text-sm">
-                          <span className="font-medium">Postal Code:</span>{" "}
-                          {ipData.postal || "N/A"}
-                        </div>
-                        <div className="text-sm">
-                          <span className="font-medium">Coordinates:</span>{" "}
-                          {getCoordinates(ipData.loc).lat},{" "}
-                          {getCoordinates(ipData.loc).long}
-                        </div>
+                      <div className="font-medium mb-2">Raw Response Data</div>
+                      <div className="bg-slate-100 dark:bg-slate-800 p-4 rounded-md overflow-auto max-h-60">
+                        <pre className="text-xs whitespace-pre-wrap">
+                          {JSON.stringify(ipData, null, 2)}
+                        </pre>
                       </div>
                     </div>
 
                     <div>
-                      <div className="font-medium flex items-center mb-2">
-                        <Clock className="mr-2 h-4 w-4" /> Time & Additional
-                        Info
+                      <div className="font-medium mb-2">
+                        Security Recommendations
                       </div>
                       <div className="space-y-2">
-                        <div className="text-sm">
-                          <span className="font-medium">Timezone:</span>{" "}
-                          {ipData.timezone || "N/A"}
-                        </div>
-                        <div className="text-sm">
-                          <span className="font-medium">
-                            Location Accuracy:
-                          </span>{" "}
-                          {"City Level"}
-                        </div>
-                        <div className="text-sm">
-                          <span className="font-medium">IP Version:</span>{" "}
-                          {ipData.ip && ipData.ip.includes(":")
-                            ? "IPv6"
-                            : "IPv4"}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div>
-                      <div className="font-medium flex items-center mb-2">
-                        <Wifi className="mr-2 h-4 w-4" /> Network Details
-                      </div>
-                      <div className="space-y-2">
-                        <div className="text-sm">
-                          <span className="font-medium">Hostname:</span>{" "}
-                          {ipData.hostname || "N/A"}
-                        </div>
-                        <div className="text-sm">
-                          <span className="font-medium">ISP/Organization:</span>{" "}
-                          {ipData.org || "N/A"}
-                        </div>
-                        <div className="text-sm">
-                          <span className="font-medium">Bogon IP:</span>{" "}
-                          {securityData?.is_bogon
-                            ? "Yes (Reserved/Private range)"
-                            : "No"}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="font-medium flex items-center mb-2">
-                        <Server className="mr-2 h-4 w-4" /> Connection Details
-                      </div>
-                      <div className="space-y-2">
-                        <div className="text-sm">
-                          <span className="font-medium">Type:</span>{" "}
-                          {securityData?.is_datacenter
-                            ? "Datacenter/Hosting"
-                            : "Residential/Business"}
-                        </div>
-                        <div className="text-sm">
-                          <span className="font-medium">Proxy:</span>{" "}
-                          {securityData?.is_proxy ? "Yes" : "No"}
-                        </div>
-                        <div className="text-sm">
-                          <span className="font-medium">VPN:</span>{" "}
-                          {securityData?.is_vpn ? "Yes" : "No"}
-                        </div>
-                        <div className="text-sm">
-                          <span className="font-medium">Tor:</span>{" "}
-                          {securityData?.is_tor ? "Yes" : "No"}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="additional">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Info className="mr-2 h-5 w-5" />
-                  Additional Information for {ipData.ip}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  <div>
-                    <div className="font-medium mb-2">Raw Response Data</div>
-                    <div className="bg-slate-100 dark:bg-slate-800 p-4 rounded-md overflow-auto max-h-60">
-                      <pre className="text-xs whitespace-pre-wrap">
-                        {JSON.stringify(ipData, null, 2)}
-                      </pre>
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="font-medium mb-2">
-                      Security Recommendations
-                    </div>
-                    <div className="space-y-2">
-                      {securityData && securityData.risk_score < 40 ? (
-                        <>
-                          <Alert variant="default" className="border-green-500">
-                            <ShieldCheck className="h-4 w-4 text-green-500" />
-                            <AlertTitle>Safe IP Score</AlertTitle>
-                            <AlertDescription>
-                              This IP has been analyzed and appears to be safe.
-                              No significant risk factors were detected.
-                            </AlertDescription>
-                          </Alert>
-                          <div className="text-sm mt-4 space-y-2">
-                            <p>
-                              Even with safe IP addresses, follow these security
-                              best practices:
-                            </p>
-                            <ul className="list-disc pl-5 space-y-1">
-                              <li>
-                                Keep your systems and applications updated
-                              </li>
-                              <li>Use strong authentication and passwords</li>
-                              <li>Implement encryption for sensitive data</li>
-                              <li>Monitor for unusual activity in your logs</li>
-                            </ul>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <Alert variant="destructive">
-                            <ShieldAlert className="h-4 w-4" />
-                            <AlertTitle>Risk Factors Detected</AlertTitle>
-                            <AlertDescription>
-                              This IP has{" "}
-                              {securityData && securityData.risk_score < 60
-                                ? "some"
-                                : "significant"}{" "}
-                              risk factors that should be addressed.
-                            </AlertDescription>
-                          </Alert>
-                          <div className="text-sm mt-4 space-y-2">
-                            <p>Recommended security actions:</p>
-                            <ul className="list-disc pl-5 space-y-1">
-                              <li>Implement additional verification steps</li>
-                              <li>Monitor all traffic from this IP closely</li>
-                              <li>
-                                Consider restricting access or implementing rate
-                                limits
-                              </li>
-                              <li>Check for unusual patterns or behaviors</li>
-                              {securityData && securityData.risk_score > 70 && (
-                                <li className="font-medium text-red-500">
-                                  Consider blocking this IP if not critical for
-                                  operations
+                        {securityData && securityData.risk_score < 40 ? (
+                          <>
+                            <Alert
+                              variant="default"
+                              className="border-green-500"
+                            >
+                              <ShieldCheck className="h-4 w-4 text-green-500" />
+                              <AlertTitle>Safe IP Score</AlertTitle>
+                              <AlertDescription>
+                                This IP has been analyzed and appears to be
+                                safe. No significant risk factors were detected.
+                              </AlertDescription>
+                            </Alert>
+                            <div className="text-sm mt-4 space-y-2">
+                              <p>
+                                Even with safe IP addresses, follow these
+                                security best practices:
+                              </p>
+                              <ul className="list-disc pl-5 space-y-1">
+                                <li>
+                                  Keep your systems and applications updated
                                 </li>
+                                <li>Use strong authentication and passwords</li>
+                                <li>Implement encryption for sensitive data</li>
+                                <li>
+                                  Monitor for unusual activity in your logs
+                                </li>
+                              </ul>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <Alert variant="destructive">
+                              <ShieldAlert className="h-4 w-4" />
+                              <AlertTitle>Risk Factors Detected</AlertTitle>
+                              <AlertDescription>
+                                This IP has{" "}
+                                {securityData && securityData.risk_score < 60
+                                  ? "some"
+                                  : "significant"}{" "}
+                                risk factors that should be addressed.
+                              </AlertDescription>
+                            </Alert>
+                            <div className="text-sm mt-4 space-y-2">
+                              <p>Recommended security actions:</p>
+                              <ul className="list-disc pl-5 space-y-1">
+                                <li>Implement additional verification steps</li>
+                                <li>
+                                  Monitor all traffic from this IP closely
+                                </li>
+                                <li>
+                                  Consider restricting access or implementing
+                                  rate limits
+                                </li>
+                                <li>Check for unusual patterns or behaviors</li>
+                                {securityData &&
+                                  securityData.risk_score > 70 && (
+                                    <li className="font-medium text-red-500">
+                                      Consider blocking this IP if not critical
+                                      for operations
+                                    </li>
+                                  )}
+                              </ul>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="font-medium mb-2">
+                        IP Reputation Summary
+                      </div>
+                      <div className="text-sm space-y-2">
+                        {securityData?.blacklisted ? (
+                          <>
+                            <p className="text-red-500">
+                              This IP address is blacklisted on{" "}
+                              {securityData.blacklist_count} security lists:
+                            </p>
+                            <ul className="list-disc pl-5">
+                              {securityData.blacklist_sources.map(
+                                (source, i) => (
+                                  <li key={i}>{source}</li>
+                                )
                               )}
                             </ul>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="font-medium mb-2">
-                      IP Reputation Summary
-                    </div>
-                    <div className="text-sm space-y-2">
-                      {securityData?.blacklisted ? (
-                        <>
-                          <p className="text-red-500">
-                            This IP address is blacklisted on{" "}
-                            {securityData.blacklist_count} security lists:
+                          </>
+                        ) : (
+                          <p className="text-green-500">
+                            This IP address is not currently blacklisted on any
+                            known security lists.
                           </p>
-                          <ul className="list-disc pl-5">
-                            {securityData.blacklist_sources.map((source, i) => (
-                              <li key={i}>{source}</li>
-                            ))}
-                          </ul>
-                        </>
-                      ) : (
-                        <p className="text-green-500">
-                          This IP address is not currently blacklisted on any
-                          known security lists.
-                        </p>
-                      )}
+                        )}
 
-                      {securityData && securityData.abuse_reports > 0 ? (
-                        <p className="text-amber-500 mt-2">
-                          This IP has been reported for abuse{" "}
-                          {securityData.abuse_reports} times recently.
-                        </p>
-                      ) : (
-                        <p className="text-green-500 mt-2">
-                          No abuse reports found for this IP address.
-                        </p>
-                      )}
+                        {securityData && securityData.abuse_reports > 0 ? (
+                          <p className="text-amber-500 mt-2">
+                            This IP has been reported for abuse{" "}
+                            {securityData.abuse_reports} times recently.
+                          </p>
+                        ) : (
+                          <p className="text-green-500 mt-2">
+                            No abuse reports found for this IP address.
+                          </p>
+                        )}
 
-                      {securityData && securityData.recent_attacks > 0 ? (
-                        <p className="text-red-500 mt-2">
-                          This IP has been associated with{" "}
-                          {securityData.recent_attacks} attacks recently.
-                        </p>
-                      ) : (
-                        <p className="text-green-500 mt-2">
-                          No recent attacks associated with this IP address.
-                        </p>
-                      )}
+                        {securityData && securityData.recent_attacks > 0 ? (
+                          <p className="text-red-500 mt-2">
+                            This IP has been associated with{" "}
+                            {securityData.recent_attacks} attacks recently.
+                          </p>
+                        ) : (
+                          <p className="text-green-500 mt-2">
+                            No recent attacks associated with this IP address.
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </>
       )}
     </div>
   );

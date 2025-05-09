@@ -31,6 +31,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
+import { EmailReportPDF } from "./email-report-pdf";
 
 // Simulated breach data structure based on the haveibeenpwned API format
 interface Breach {
@@ -106,11 +107,6 @@ export const EmailDataBreach = () => {
     setEmailDetails(null);
 
     try {
-      // In a real implementation, you would make an API call to a service
-      // such as haveibeenpwned.com API with proper authentication
-      // For demo purposes, we'll simulate the API response with mock data
-
-      // Simulate an API delay
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
       // Generate detailed email analysis
@@ -461,12 +457,15 @@ export const EmailDataBreach = () => {
 
       {emailDetails && (
         <Tabs defaultValue="overview" className="w-full mb-8">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="breaches">Data Breaches</TabsTrigger>
-            <TabsTrigger value="reputation">Reputation</TabsTrigger>
-            <TabsTrigger value="details">Technical Details</TabsTrigger>
-          </TabsList>
+          <div className="flex justify-between items-center mb-4">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="breaches">Data Breaches</TabsTrigger>
+              <TabsTrigger value="reputation">Reputation</TabsTrigger>
+              <TabsTrigger value="details">Technical Details</TabsTrigger>
+            </TabsList>
+          </div>
+          <EmailReportPDF emailDetails={emailDetails} breaches={breaches} />
 
           <TabsContent value="overview">
             <Card>
